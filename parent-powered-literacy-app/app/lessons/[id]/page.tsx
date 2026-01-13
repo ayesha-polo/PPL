@@ -2,41 +2,49 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { supabase } from '../../../lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
 type Lesson = {
+  id: string
   title: string
-  overview: string
-  objectives: string
-  content: string
+  week: number
+  overview: string | null
+  objectives: string | null
+  content: string | null
 }
 
-export default function LessonPage() {
+export default function LessonDetailPage() {
   const { id } = useParams()
   const [lesson, setLesson] = useState<Lesson | null>(null)
 
   useEffect(() => {
-    supabase
-      .from('lessons')
-      .select('title, overview, objectives, content')
-      .eq('id', id)
-      .single()
-      .then(({ data }) => setLesson(data))
+    const fetchLesson = async () => {
+      const { data } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      setLesson(data)
+    }
+
+    fetchLesson()
   }, [id])
 
-  if (!lesson) return <p>Loading lesson...</p>
+  if (!lesson) return <p>Loading...</p>
 
   return (
     <div>
-      <h1>{lesson.title}</h1>
+      <h1>
+        Week {lesson.week}: {lesson.title}
+      </h1>
 
-      <h2>Overview</h2>
       <p>{lesson.overview}</p>
 
-      <h2>Objectives</h2>
+      <h3>Objectives</h3>
       <p>{lesson.objectives}</p>
 
-      <h2>Lesson Content</h2>
+      <h3>Lesson Content</h3>
       <p>{lesson.content}</p>
     </div>
   )
