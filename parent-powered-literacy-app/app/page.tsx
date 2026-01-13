@@ -1,11 +1,17 @@
 'use client'
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabaseClient'
 
 export default function Home() {
-  useEffect(() => {
-    supabase.auth.getSession().then(console.log)
-  }, [])
+  const router = useRouter()
 
-  return <h1>PPL Connected</h1>
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) router.push('/dashboard')
+      else router.push('/login')
+    })
+  }, [router])
+
+  return <p>Loading...</p>
 }
