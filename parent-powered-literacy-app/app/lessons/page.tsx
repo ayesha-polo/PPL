@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
+import { getUser } from '@/lib/auth'
+
 
 type Lesson = {
   id: string
@@ -11,20 +14,28 @@ type Lesson = {
 }
 
 export default function LessonsPage() {
-  const [lessons, setLessons] = useState<Lesson[]>([])
+ const router = useRouter()
+ const [lessons, setLessons] = useState<Lesson[]>([])
 
-  useEffect(() => {
-    const fetchLessons = async () => {
-      const { data } = await supabase
-        .from('lessons')
-        .select('id, title, week')
-        .order('week')
+ useEffect(() => {
+  const checkAuthAndFetch = async () => {
+    const user = await getUser()
 
-      setLessons(data || [])
+    if (!user) {
+      router.push('/login')
+      return
     }
 
-    fetchLessons()
-  }, [])
+    const { data } = await supabase
+      .from('lessons')
+      .select('id, title, week')
+      .order('week')
+
+    setLessons(data || [])
+  }
+
+  checkAuthAndFetch()
+}, [router])
 
   return (
     <div>
