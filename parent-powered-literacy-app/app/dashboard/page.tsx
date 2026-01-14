@@ -1,48 +1,62 @@
 'use client'
+
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '../../lib/supabaseClient'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabaseClient'
 
-type Lesson = {
-  id: string
-  title: string
-  week: number
-}
-
-export default function Dashboard() {
-  const router = useRouter()
-  const [lessons, setLessons] = useState<Lesson[]>([])
-  const [loading, setLoading] = useState(true)
+export default function DashboardPage() {
+  const [completedCount, setCompletedCount] = useState(0)
+  const [totalLessons, setTotalLessons] = useState(0)
+  const [nextLessonId, setNextLessonId] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.push('/login')
-    })
+    const fetchDashboardData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    supabase
-      .from('lessons')
-      .select('id,title,week')
-      .order('week')
-      .then(({ data }) => {
-        setLessons(data || [])
-        setLoading(false)
-      })
-  }, [router])
+      if (!user) return
 
-  if (loading) return <p>Loading...</p>
+      const { data: lessons } = await supabase
+        .from('lessons')
+        .select('id')
+        .order('week')
+
+      const { data: progress } = await supabase
+        .from('progress')
+        .select('lesson_id')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+
+      setTotalLessons(lessons?.length || 0)
+      setCompletedCount(progress?.length || 0)
+
+      const completedIds = progress?.map(p => p.lesson_id) || []
+      const nextLesson = lessons?.find(l => !completedIds.includes(l.id))
+
+      if (nextLesson) {
+        setNextLessonId(nextLesson.id)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
 
   return (
     <div>
-      <h1>Dashboard</h1>
-      <ul>
-        {lessons.map(l => (
-          <li key={l.id}>
-            <a href={`/lessons/${l.id}`}>
-              Week {l.week}: {l.title}
-            </a>
-          </li>
-        ))}
-      </ul>
+      <h1>Welcome to Parent Powered Literacy</h1>
+
+      <p>
+        You have completed {completedCount} of {totalLessons} lessons.
+      </p>
+
+      {nextLessonId && (
+        <Link href={`/lessons/${nextLessonId}`}>
+          <button style={{ marginTop: '16px' }}>
+            Continue to next lesson
+          </button>
+        </Link>
+      )}
     </div>
   )
 }
