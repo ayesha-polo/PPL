@@ -37,8 +37,8 @@ export default function DiscussionPage() {
     })
 
     setMessage('')
-    
-    // Refresh posts after insert
+
+    // Refresh posts
     const { data } = await supabase
       .from('discussion_posts')
       .select('*')
@@ -49,36 +49,46 @@ export default function DiscussionPage() {
 
   return (
     <div>
-      <h1>Discussion Forum</h1>
+      {/* Page intro */}
+      <div className="card">
+        <div className="card-title">Discussion Forum</div>
+        <p className="card-muted">
+          Use this space to ask questions, share reflections, or connect with
+          other parents in the course.
+        </p>
+      </div>
 
-      <p>
-        Use this space to ask questions, share reflections, or connect with
-        other parents in the course.
-      </p>
+      {/* Post form */}
+      <div className="card">
+        <form onSubmit={handleSubmit}>
+          <textarea
+            placeholder="Write your message here..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={4}
+            style={{ width: '100%' }}
+          />
 
-      <form onSubmit={handleSubmit}>
-        <textarea
-          placeholder="Write your message here..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          rows={4}
-          style={{ width: '100%' }}
-        />
+          <button type="submit" style={{ marginTop: '12px' }}>
+            Post Message
+          </button>
+        </form>
+      </div>
 
-        <button type="submit" style={{ marginTop: '12px' }}>
-          Post Message
-        </button>
-      </form>
+      {/* Posts */}
+      <div className="card">
+        <div className="card-title">Recent Posts</div>
 
-      <h2 style={{ marginTop: '32px' }}>Recent Posts</h2>
+        {posts.length === 0 && (
+          <p className="card-muted">No posts yet.</p>
+        )}
 
-      {posts.length === 0 && <p>No posts yet.</p>}
-
-      {posts.map((post) => (
-        <div key={post.id} style={{ marginBottom: '12px' }}>
-          <p>{post.content}</p>
-        </div>
-      ))}
+        {posts.map((post) => (
+          <div key={post.id} className="card" style={{ marginTop: '12px' }}>
+            <p>{post.content}</p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
